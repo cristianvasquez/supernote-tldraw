@@ -1,6 +1,25 @@
-import { createShapesForAssets, Tldraw, Vec } from 'tldraw'
+import { Tldraw } from 'tldraw'
 import 'tldraw/tldraw.css'
-import { SupernoteX, toImage } from 'supernote-typescript'
+import { SupernoteX } from 'supernote-typescript'
+
+class SupernoteWorker {
+  constructor () {
+    this.worker = new Worker(new URL('./worker.js', import.meta.url),
+      { type: 'module' })
+  }
+
+  process (note, pageIndex) {
+    this.worker.postMessage({ note, pageIndex })
+  }
+
+  onMessage (callback) {
+    this.worker.onmessage = (e) => callback(e.data)
+  }
+
+  terminate () {
+    this.worker.terminate()
+  }
+}
 
 export default function App () {
   const handleMount = (editor) => {
@@ -21,53 +40,67 @@ export default function App () {
           const note = new SupernoteX(new Uint8Array(arrayBuffer))
           const totalPages = note.pages.length
 
-          for (let pageIndex = 1; pageIndex <= totalPages; pageIndex++) {
-            try {
-              const [image] = await toImage(note, [pageIndex])
-              const imageBuffer = await image.toBuffer('image/png')
-              
-              // Convert buffer to base64 using browser APIs
-              const base64 = btoa(
-                new Uint8Array(imageBuffer)
-                  .reduce((data, byte) => data + String.fromCharCode(byte), '')
-              )
-              const dataUrl = `data:image/png;base64,${base64}`
+          // Create workers pool
+          const MAX_WORKERS = Math.min(navigator.hardwareConcurrency || 3, 8)
+          const workers = Array(MAX_WORKERS).
+            fill(null).
+            map(() => new SupernoteWorker())
+          const processQueue = Array.from({ length: totalPages },
+            (_, i) => i + 1)
 
-              // Create asset with unique ID
-              const assetId = `asset:${Date.now()}-${pageIndex}`
-              const assets = await editor.createAssets([
-                {
-                  id: assetId,
-                  type: 'image',
-                  typeName: 'asset',
-                  props: {
-                    name: `page_${pageIndex}.png`,
-                    src: dataUrl,
-                    w: 200,
-                    h: 300,
-                    mimeType: 'image/png',
-                    isAnimated: false,
-                  },
-                  meta: {},
+          // Set up workers
+          workers.forEach(worker => {
+            worker.onMessage(
+              async ({ pageIndex, imageData, status, error }) => {
+                if (status === 'success') {
+                  const base64 = btoa(
+                    String.fromCharCode(...new Uint8Array(imageData)))
+                  const dataUrl = `data:image/png;base64,${base64}`
+
+                  const assetId = `asset:${Date.now()}-${pageIndex}`
+                  await editor.createAssets([
+                    {
+                      id: assetId,
+                      type: 'image',
+                      typeName: 'asset',
+                      props: {
+                        name: `page_${pageIndex}.png`,
+                        src: dataUrl,
+                        w: 200,
+                        h: 300,
+                        mimeType: 'image/png',
+                        isAnimated: false,
+                      },
+                      meta: {},
+                    },
+                  ])
+
+                  editor.createShape({
+                    type: 'image',
+                    x: position.x + (pageIndex - 1) * 220,
+                    y: position.y,
+                    props: {
+                      w: 200,
+                      h: 300,
+                      assetId: assetId,
+                    },
+                  })
                 }
-              ])
 
-              editor.createShape({
-                type: 'image',
-                x: position.x + (pageIndex - 1) * 220,
-                y: position.y,
-                props: {
-                  w: 200,
-                  h: 300,
-                  assetId: assetId,
+                // Process next page if available
+                const nextPage = processQueue.shift()
+                if (nextPage) {
+                  worker.process(note, nextPage)
                 }
               })
+          })
 
-              // No need for URL.revokeObjectURL anymore
-            } catch (error) {
-              console.error(`Error processing page ${pageIndex}:`, error)
-            }
-          }
+          // Start initial batch of processing
+          workers.forEach(worker => {
+            const pageIndex = processQueue.shift()
+            if (pageIndex) worker.process(note, pageIndex)
+          })
+
         } else {
           editor.createShape({
             type: 'geo',

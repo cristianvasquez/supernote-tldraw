@@ -52,6 +52,19 @@ export default function App () {
           const HORIZONTAL_SPACING = 220
           const VERTICAL_SPACING = 320
 
+          // Create title first
+          const titleShape = editor.createShape({
+            type: 'text',
+            x: position.x,
+            y: position.y - 40, // Place title above the grid
+            props: {
+              text: file.name,
+            },
+          })
+
+          // Array to store all shape IDs for grouping
+          const shapeIds = [titleShape.id]
+
           // Create workers pool
           const MAX_WORKERS = Math.min(navigator.hardwareConcurrency || 3, 8)
           const workers = Array(MAX_WORKERS).
@@ -90,7 +103,7 @@ export default function App () {
                     },
                   ])
 
-                  editor.createShape({
+                  const shape = editor.createShape({
                     type: 'image',
                     x: position.x + col * HORIZONTAL_SPACING,
                     y: position.y + row * VERTICAL_SPACING,
@@ -101,10 +114,16 @@ export default function App () {
                     },
                   })
 
+                  // Add shape ID to array for grouping
+                  shapeIds.push(shape.id)
+
                   completedPages++
                   if (completedPages === totalPages) {
 
                     // addToast({ title: 'All pages transformed successfully', severity: 'success' })
+                    // Create group with all shapes
+                    editor.groupShapes(shapeIds)
+                    
                     // Clean up workers
                     workers.forEach(w => w.terminate())
                   }

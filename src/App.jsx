@@ -1,4 +1,4 @@
-import { Tldraw } from 'tldraw'
+import { Tldraw, useToasts } from 'tldraw'
 import 'tldraw/tldraw.css'
 import { SupernoteX } from 'supernote-typescript'
 
@@ -22,7 +22,11 @@ class SupernoteWorker {
 }
 
 export default function App () {
+
   const handleMount = (editor) => {
+
+    // const { addToast } = useToasts()
+
     editor.registerExternalContentHandler('files', async ({ point, files }) => {
       if (files.length > editor.options.maxFilesAtOnce) {
         throw new Error('Too many files')
@@ -36,9 +40,17 @@ export default function App () {
 
       for (const file of files) {
         if (file.name.endsWith('.note')) {
+
+          // addToast({ title: 'Transforming note pages...', severity: 'success' })
+
           const arrayBuffer = await file.arrayBuffer()
           const note = new SupernoteX(new Uint8Array(arrayBuffer))
           const totalPages = note.pages.length
+
+          let completedPages = 0
+          const ITEMS_PER_ROW = 6
+          const HORIZONTAL_SPACING = 220
+          const VERTICAL_SPACING = 320
 
           // Create workers pool
           const MAX_WORKERS = Math.min(navigator.hardwareConcurrency || 3, 8)
@@ -56,6 +68,9 @@ export default function App () {
                   const base64 = btoa(
                     String.fromCharCode(...new Uint8Array(imageData)))
                   const dataUrl = `data:image/png;base64,${base64}`
+
+                  const row = Math.floor((pageIndex - 1) / ITEMS_PER_ROW)
+                  const col = (pageIndex - 1) % ITEMS_PER_ROW
 
                   const assetId = `asset:${Date.now()}-${pageIndex}`
                   await editor.createAssets([
@@ -77,14 +92,22 @@ export default function App () {
 
                   editor.createShape({
                     type: 'image',
-                    x: position.x + (pageIndex - 1) * 220,
-                    y: position.y,
+                    x: position.x + col * HORIZONTAL_SPACING,
+                    y: position.y + row * VERTICAL_SPACING,
                     props: {
                       w: 200,
                       h: 300,
                       assetId: assetId,
                     },
                   })
+
+                  completedPages++
+                  if (completedPages === totalPages) {
+
+                    // addToast({ title: 'All pages transformed successfully', severity: 'success' })
+                    // Clean up workers
+                    workers.forEach(w => w.terminate())
+                  }
                 }
 
                 // Process next page if available

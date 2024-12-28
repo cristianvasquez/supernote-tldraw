@@ -123,7 +123,7 @@ export default function App () {
                     // addToast({ title: 'All pages transformed successfully', severity: 'success' })
                     // Create group with all shapes
                     editor.groupShapes(shapeIds)
-                    
+
                     // Clean up workers
                     workers.forEach(w => w.terminate())
                   }

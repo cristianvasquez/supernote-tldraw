@@ -1,5 +1,6 @@
 import { Tldraw, useToasts } from 'tldraw'
 import 'tldraw/tldraw.css'
+import { handlePdf } from './handlePdf.js'
 import { handleSupernote } from './handleSupernote.js'
 
 export default function App () {
@@ -29,7 +30,9 @@ export default function App () {
           },
         })
 
-        if (file.name.endsWith('.note')) {
+        if (file.name.endsWith('.pdf')) {
+          await handlePdf(file, editor, position)
+        } else if (file.name.endsWith('.note')) {
           await handleSupernote(file, editor, position)
 
         } else {

@@ -7,12 +7,17 @@ Display your pdfs and supernote notes in a canvas, so you can manipulate the pag
 You can try this [online](https://cristianvasquez.github.io/supernote-tldraw/
 )
 
-To use, drag and drop a .note file into the canvas
+To use, drag and drop a document into the canvas
 
-All transformations occur directly in your browser (your notes remain private and are not transmitted to any server)
+Supported files:
+
+- pdfs
+- .note files (supernote)
+
+All transformations occur directly in your browser (your documents remain private and are not transmitted to any server)
 
 Note: this is a tldraw canvas with limited functionality. So I recommend to
-use this just to extract the pages from a .note file.
+use this just to extract the pages from a .note or pdf file.
 
 Open a new tab with [tldraw](https://github.com/tldraw/tldraw), then, simply copy and paste your pages into tldraw. In
 that way you can save your work, upload other media and even collaborate with others.

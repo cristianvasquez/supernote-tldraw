@@ -1,7 +1,6 @@
-
 # Supernote tl-draw
 
-Display your notes in a canvas, so you can manipulate the pages in other ways
+Display your notes in a canvas, so you can manipulate the pages in new ways
 
 ![img.png](img.png)
 
@@ -12,7 +11,10 @@ To use, drag and drop a .note file into the canvas
 
 All transformations occur directly in your browser (your notes remain private and are not transmitted to any server)
 
-Thanks to: 
+The canvas functionality is provided by [tldraw](https://github.com/tldraw/tldraw) and the supernote transformation
+uses [supernote-typescript](https://github.com/philips/supernote-typescript)
 
-- [supernote-typescript](https://github.com/philips/supernote-typescript) library
-- [tldraw](https://github.com/tldraw/tldraw)
+You can also try a simpler variant at [supernote-web-viewer/](https://cristianvasquez.github.io/supernote-web-viewer/)
+
+
+

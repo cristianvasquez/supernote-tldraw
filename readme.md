@@ -1,4 +1,4 @@
-# Supernote tl-draw
+# Supernote in a canvas
 
 Display your notes in a canvas, so you can manipulate the pages in new ways
 

@@ -2,7 +2,7 @@ import { SupernoteX } from 'supernote-typescript'
 
 class SupernoteWorker {
   constructor () {
-    this.worker = new Worker(new URL('./worker.js', import.meta.url),
+    this.worker = new Worker(new URL('./supernote.worker.js', import.meta.url),
       { type: 'module' })
   }
 
